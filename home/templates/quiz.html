@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Django Quiz App</title>
+    <script src="https://cdn.jsdelivr.net/npm/vue@2.6.14/dist/vue.js"></script>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"
+        integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+</head>
+
+<body>
+
+    <div id="app">
+        <div class="container mt-5 pt-5">
+            <div class="col-md-5 mx-auto">
+                <div class="form-check">
+                    <h3>Give Quiz</h3>
+                    <div v-for="(question, qIndex) in questions" :key="qIndex">
+                        <hr>
+                        <p>[[ question.question ]]</p>
+                        <div class="form-check" v-for="(answer, aIndex) in question.answers" :key="aIndex">
+                            <input @change="checkAnswer($event, question.uid)" :value="answer.answer"
+                                class="form-check-input" type="radio" :name="'flexRadioDefault' + qIndex"
+                                :id="'flexRadioDefault' + qIndex + '-' + aIndex">
+                            <label class="form-check-label" :for="'flexRadioDefault' + qIndex + '-' + aIndex">
+                                [[ answer.answer ]]
+                            </label>
+                        </div>
+                    </div>
+                    <hr>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function getQueryParameter(name) {
+            let urlParams = new URLSearchParams(window.location.search);
+            return urlParams.get(name);
+        }
+
+        var app = new Vue({
+            el: '#app',
+            delimiters: ['[[', ']]'],
+            data() {
+                return {
+                    category: getQueryParameter('category') || 'default',
+                    questions: []
+                }
+            },
+            methods: {
+                getQuestions() {
+                    var _this = this;
+                    fetch(`/api/get-quiz/?category=${_this.category}`)
+                        .then(response => response.json())
+                        .then(result => {
+                            if (result.status) {
+                                _this.questions = result.data;
+                            } else {
+                                console.error('Error fetching questions:', result.error);
+                            }
+                        })
+                        .catch(error => {
+                            console.error('Error fetching questions:', error);
+                        });
+                },
+                checkAnswer(event, uid) {
+                    this.questions.map(question => {
+                        if (question.uid === uid) {
+                            console.log(question.answers);
+                            answers = question.answers;
+                            for (var i = 0; i < answers.length; i++) {
+                                if (answers[i].answer === event.target.value) {
+                                    if (answers[i].is_correct) {
+                                        console.log('Your answer is correct');
+                                        alert('Hurray your answer is corect')
+                                    } else {
+                                        console.log('Your answer is incorrect');
+                                        alert('Sorry your answer is wrong')
+                                    }
+                                }
+                            } 
+                        }
+                    }); 
+                    console.log(event.target.value, uid);
+                }
+
+            },
+            created() {
+                this.getQuestions();
+                console.log('Page Loaded');
+            },
+        });
+    </script>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
+        integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz"
+        crossorigin="anonymous"></script>
+</body>
+
+</html>
